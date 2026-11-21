@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#000000">
-<title>หน้าทับสองไม้ / ทยอย</title>
+<title>หน้าทับสดายงค์ · ฝึกกลองแขก</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -89,6 +89,11 @@
   .nm-sheet { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; row-gap: 22px; max-width: 1100px; }
   .nm-bar2 { display: flex; padding: 0 6px 6px; border-left: 2px solid rgba(255,255,255,.55); border-bottom: 1px solid rgba(255,255,255,.14); }
   .nm-bar2.first { border-left-color: transparent; }
+  .nm-break { flex-basis: 100%; height: 0; }
+  #nomania { justify-content: flex-start; }
+  #nomania > :first-child { margin-top: auto; }
+  #nomania > :last-child { margin-bottom: auto; }
+  @media (max-width: 640px) { .nm-sheet { row-gap: 12px; } }
   .nm-c { width: clamp(34px, 7.4vw, 60px); display: flex; flex-direction: column; align-items: center; border-radius: 12px; padding: 4px 0 5px; border: 2px solid transparent; transition: background .08s, transform .08s; }
   .nm-c .o { height: 18px; font-size: .82rem; color: #f87171; line-height: 18px; }
   .nm-c .o.off { opacity: .35; text-decoration: line-through; }
@@ -109,15 +114,25 @@
 <section id="screen-menu" class="mx-auto max-w-3xl px-4 py-8 sm:py-12">
   <header class="mb-7">
     <p class="text-xs tracking-[0.28em] text-accent">กลองแขก · หน้าทับ</p>
-    <h1 class="mt-2 text-4xl sm:text-5xl font-semibold leading-tight">หน้าทับสองไม้ <span class="text-accent">/ ทยอย</span></h1>
+    <h1 id="song-title" class="mt-2 text-4xl sm:text-5xl font-semibold leading-tight">หน้าทับ<span class="text-accent">สดายงค์</span></h1>
     <p class="mt-3 text-zinc-400 text-sm">60 BPM · 2 โน้ตต่อวินาที · สามชั้น → สองชั้น → ชั้นเดียว (ชั้นละ 2 รอบ)</p>
     <p id="audio-status" class="mt-1 text-xs text-zinc-500">กำลังโหลดเสียง…</p>
   </header>
 
   <div class="grid gap-4">
     <div class="card">
+      <div class="card-title">เพลง</div>
+      <div id="seg-song" class="seg"></div>
+    </div>
+    <div class="card">
       <div class="card-title">กลองที่คุณตี</div>
       <div id="seg-drum" class="seg"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">การแสดงผล</div>
+      <div id="seg-view" class="seg"></div>
+      <div class="card-title mt-4">โหมดบันเทิง</div>
+      <div id="seg-view2" class="seg"></div>
     </div>
     <div class="grid gap-4 sm:grid-cols-2">
       <div class="card">
@@ -125,8 +140,8 @@
         <div id="seg-mode" class="seg"></div>
       </div>
       <div class="card">
-        <div class="card-title">การแสดงผล</div>
-        <div id="seg-view" class="seg"></div>
+        <div class="card-title">ชั้นที่เล่น</div>
+        <div id="seg-level" class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))"></div>
       </div>
     </div>
     <div class="grid gap-4 sm:grid-cols-2">
@@ -165,14 +180,14 @@
     <button id="btn-start" class="btn-primary flex-1" disabled>▶ เริ่มเล่น</button>
     <button id="btn-notes" class="btn-ghost sm:w-48">ดูโน้ต</button>
   </div>
-  <p class="mt-4 text-xs text-zinc-500">Perfect ±75 ms · Good ±150 ms · กดผิดปุ่ม/กดตอนไม่มีโน้ต = Miss · Esc = Pause</p>
+  <p class="mt-4 text-xs text-zinc-500">กดก่อน: Perfect ≤150 ms · Good ≤300 ms · กดช้า: Perfect ≤75 ms · Good ≤150 ms · กดผิดปุ่ม/กดตอนไม่มีโน้ต = Miss · Esc = Pause</p>
 </section>
 
 <!-- ===================== NOTES VIEW ===================== -->
 <section id="screen-notes" class="hide mx-auto max-w-4xl px-4 py-8">
   <div class="flex items-center gap-3 mb-6">
     <button id="notes-back" class="icon-btn" aria-label="กลับ">←</button>
-    <h2 class="text-2xl font-semibold">โน้ตหน้าทับสองไม้ <span class="text-accent">/ ทยอย</span></h2>
+    <h2 id="notes-title" class="text-2xl font-semibold">โน้ต</h2>
   </div>
   <div id="legend" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6"></div>
   <div id="sheet" class="grid gap-4"></div>
@@ -264,8 +279,9 @@ const LEVEL_NAME = { sam: 'สามชั้น', song: 'สองชั้น'
 const BPM = 60;
 const BEAT_SEC = 60 / BPM;   // Metronome 1 ครั้ง = 1 วินาที
 const SLOT_SEC = 0.5;        // 1 ตัวโน้ต = 0.5 วินาที (2 โน้ตต่อวินาที)
-const PERFECT_WIN = 0.075;
-const GOOD_WIN = 0.150;
+// หน้าต่างตัดสิน: กดก่อน (early) ให้กว้างกว่า กดช้า (late) เท่าเดิม
+const EARLY_PERFECT = 0.150, EARLY_GOOD = 0.300;
+const LATE_PERFECT = 0.075, LATE_GOOD = 0.150;
 const COUNT_BEATS = 4;       // 3, 2, 1, GO
 const LOOKAHEAD = 0.35;      // จองเสียงล่วงหน้า (วินาที)
 const TIMER_MS = 40;
@@ -273,56 +289,111 @@ const VISIBLE_SEC = 2.5;
 const SCORE_PTS = { perfect: 300, good: 100 };
 
 /* =========================================================
- * โน้ตจากภาพ (1 ตัวอักษร = 1 ตำแหน่ง, 4 ตัว = 1 ห้อง)
+ * เพลง (โน้ตจากภาพ) — 1 ตัวอักษร = 1 ตำแหน่ง, 4 ตัว = 1 ห้อง
+ *   sheet: แต่ละชั้นแบ่งเป็นแถวตามบรรทัดในภาพ
  *   '-' = เว้น, '*' = ตำแหน่งที่มี (ต) กำกับในภาพ
+ *   exam : ลำดับการสอบ (แต่ละชั้น 2 รอบ)
  * ========================================================= */
-const SHEET = {
-  sam:  ['--ทต', 'ทตจจ', '--จจ', '--จจ', '-ต-ต', '-ทตท', '-ต-ต', '-ทตท'],
-  song: ['*-จจ', 'ตต-ต', '--จจ', 'ตต-ท'],
-  dieo: ['*-จจ', 'ตต-ท']
+const SADAYONG = {
+  sam: [
+    ['--ทต', 'ทตจจ', '--จจ', '--จจ', '----', '--จจ', '--จจ', '--จจ'],
+    ['--ตต', '--ทท', '--ทท', '--ตต', '-ต-ท', '--ตต', '-ต-ท', 'ตท-ต']
+  ],
+  song: [['--ทต', 'ทตจจ', '--จจ', '--จจ', '-ต-ท', 'ตท-ต', '-ต-ท', 'ตท-ต']],
+  dieo: [['--จจ', '-จ-จ', '-ต-ท', 'ตท-ท']]
 };
+const SONGMAI = {
+  sam:  [['--ทต', 'ทตจจ', '--จจ', '--จจ', '-ต-ต', '-ทตท', '-ต-ต', '-ทตท']],
+  song: [['*-จจ', 'ตต-ต', '--จจ', 'ตต-ท']],
+  dieo: [['*-จจ', 'ตต-ท']]
+};
+const SONGS = {
+  sadayong: {
+    id: 'sadayong', name: 'หน้าทับสดายงค์', titleHTML: 'หน้าทับ<span class="text-accent">สดายงค์</span>',
+    sheet: SADAYONG, hasOpt: false, hasEnd: false,
+    meta: { sam: '16 ห้อง', song: '8 ห้อง', dieo: '4 ห้อง' },
+    exam: [
+      { level: 'sam',  loop: 1, bars: SADAYONG.sam.flat() },
+      { level: 'sam',  loop: 2, bars: SADAYONG.sam.flat() },
+      { level: 'song', loop: 1, bars: SADAYONG.song.flat() },
+      { level: 'song', loop: 2, bars: SADAYONG.song.flat() },
+      { level: 'dieo', loop: 1, bars: SADAYONG.dieo.flat() },
+      { level: 'dieo', loop: 2, bars: SADAYONG.dieo.flat() }
+    ]
+  },
+  songmai: {
+    id: 'songmai', name: 'หน้าทับสองไม้ / ทยอย', titleHTML: 'หน้าทับสองไม้ <span class="text-accent">/ ทยอย</span>',
+    sheet: SONGMAI, hasOpt: true, hasEnd: true,
+    meta: { sam: '8 ห้อง', song: '4 ห้อง — (ต) : รอบแรกไม่มี ต นำหน้า, รอบที่สองตี ต', dieo: '2 ห้อง — (ต) : ตี ต นำหน้าทั้ง 2 รอบ (ตามลำดับสอบ)' },
+    // สองชั้นรอบแรกไม่มี ต นำหน้า, จบด้วยการย้อนกลับมาตี (ต) แล้วจบ
+    exam: [
+      { level: 'sam',  loop: 1, bars: ['--ทต', 'ทตจจ', '--จจ', '--จจ', '-ต-ต', '-ทตท', '-ต-ต', '-ทตท'] },
+      { level: 'sam',  loop: 2, bars: ['--ทต', 'ทตจจ', '--จจ', '--จจ', '-ต-ต', '-ทตท', '-ต-ต', '-ทตท'] },
+      { level: 'song', loop: 1, bars: ['--จจ', 'ตต-ต', '--จจ', 'ตต-ท'] },
+      { level: 'song', loop: 2, bars: ['ต-จจ', 'ตต-ต', '--จจ', 'ตต-ท'] },
+      { level: 'dieo', loop: 1, bars: ['ต-จจ', 'ตต-ท'] },
+      { level: 'dieo', loop: 2, bars: ['ต-จจ', 'ตต-ท'] },
+      { level: 'end',  loop: 1, bars: ['ต'] }
+    ]
+  }
+};
+const SONG_ORDER = ['sadayong', 'songmai'];
 
-/* ลำดับการสอบ (ส่วนล่างของภาพ) — แต่ละชั้น 2 รอบ
- * สองชั้นรอบแรกไม่มี ต นำหน้า, ปิดท้ายด้วย ต (จบ) */
-const EXAM = [
-  { level: 'sam',  loop: 1, bars: ['--ทต', 'ทตจจ', '--จจ', '--จจ', '-ต-ต', '-ทตท', '-ต-ต', '-ทตท'] },
-  { level: 'sam',  loop: 2, bars: ['--ทต', 'ทตจจ', '--จจ', '--จจ', '-ต-ต', '-ทตท', '-ต-ต', '-ทตท'] },
-  { level: 'song', loop: 1, bars: ['--จจ', 'ตต-ต', '--จจ', 'ตต-ท'] },
-  { level: 'song', loop: 2, bars: ['ต-จจ', 'ตต-ต', '--จจ', 'ตต-ท'] },
-  { level: 'dieo', loop: 1, bars: ['ต-จจ', 'ตต-ท'] },
-  { level: 'dieo', loop: 2, bars: ['ต-จจ', 'ตต-ท'] },
-  { level: 'end',  loop: 1, bars: ['ต'] }
-];
-
-/* จับคู่สัญลักษณ์ → ไฟล์เสียง: จจ = โจ๊ะ (ตัวผู้) + จ๊ะ (ตัวเมีย) */
+/* จับคู่สัญลักษณ์ → ไฟล์เสียง
+ *   จ เรียงเป็นคู่ตามลำดับ: ตัวแรก = โจ๊ะ (ตัวผู้), ตัวหลัง = จ๊ะ (ตัวเมีย)
+ *   ใช้ได้ทั้ง "จจ" ที่ติดกัน และ "-จ-จ" ที่เว้นระยะ */
 function resolveSounds(chars) {
   const out = new Array(chars.length).fill(null);
+  let nextJ = 'joh';
   for (let i = 0; i < chars.length; i++) {
     const ch = chars[i];
     if (ch === 'ต') out[i] = 'ting';
     else if (ch === 'ท') out[i] = 'thang';
-    else if (ch === 'จ') {
-      if (i > 0 && chars[i - 1] === 'จ' && out[i - 1] === 'joh') out[i] = 'jah';
-      else if (chars[i + 1] === 'จ') out[i] = 'joh';
-      else throw new Error('พบ จ ที่ไม่ครบคู่ ที่ตำแหน่ง ' + i);
-    } else if (ch !== '-' && ch !== '*') throw new Error('ไม่รู้จักสัญลักษณ์ ' + ch);
+    else if (ch === 'จ') { out[i] = nextJ; nextJ = nextJ === 'joh' ? 'jah' : 'joh'; }
+    else if (ch !== '-' && ch !== '*') throw new Error('ไม่รู้จักสัญลักษณ์ ' + ch);
   }
+  if (nextJ !== 'joh') throw new Error('พบ จ ที่ไม่ครบคู่');
   return out;
 }
 
 /* Timeline ของการสอบ 1 รอบ: ตำแหน่ง, ระดับ, รอบ, ห้อง, จังหวะในห้อง */
-const SECTIONS = [];
-const TIMELINE = [];
-EXAM.forEach((sec, si) => {
-  const start = TIMELINE.length;
-  sec.bars.forEach((bar, bi) => {
-    [...bar].forEach((ch, k) => {
-      TIMELINE.push({ i: TIMELINE.length, sym: ch, sec: si, level: sec.level, loop: sec.loop, bar: bi + 1, beat: k + 1 });
+let SONG = null, SHEET = null, EXAM = null, SECTIONS = [], TIMELINE = [];
+/* สร้าง timeline จากรายการท่อน [{level, loop, bars}] */
+function buildProgram(list) {
+  const timeline = [], sections = [];
+  list.forEach((sec, si) => {
+    const start = timeline.length;
+    sec.bars.forEach((bar, bi) => {
+      [...bar].forEach((ch, k) => {
+        timeline.push({ i: timeline.length, sym: ch, sec: si, level: sec.level, loop: sec.loop, bar: bi + 1, beat: k + 1 });
+      });
     });
+    const sounds = resolveSounds(timeline.slice(start).map(s => s.sym)); // จับคู่ จ ภายในแต่ละรอบ
+    sounds.forEach((snd, k) => { timeline[start + k].sound = snd; });
+    sections.push({ idx: si, level: sec.level, loop: sec.loop, bars: sec.bars, start, len: timeline.length - start });
   });
-  SECTIONS.push({ idx: si, level: sec.level, loop: sec.loop, bars: sec.bars, start, len: TIMELINE.length - start });
-});
-resolveSounds(TIMELINE.map(s => s.sym)).forEach((snd, i) => { TIMELINE[i].sound = snd; });
+  return { timeline, sections };
+}
+function loadSong(id) {
+  SONG = SONGS[id] || SONGS.sadayong;
+  SHEET = SONG.sheet; EXAM = SONG.exam;
+  const p = buildProgram(EXAM);
+  SECTIONS = p.sections; TIMELINE = p.timeline;
+}
+/* โปรแกรมที่จะเล่นตามชั้นที่เลือก
+ *   ทุกชั้น       : ชุดสอบเต็ม
+ *   ชั้นเดียว/โหมดปกติ : ชั้นนั้น 2 รอบตามลำดับสอบ (ชั้นเดียวของเพลงที่มีตัวจบ → ย้อนมา (ต) แล้วจบ)
+ *   ชั้นเดียว/Infinite : รอบแรกตามรอบที่ 1 ของการสอบ, รอบต่อ ๆ ไปตามรอบที่ 2 (1 loop = 1 รอบ) */
+function makePrograms(level, infinite) {
+  if (level === 'all') { const p = buildProgram(EXAM); return [p, p]; }
+  const L1 = EXAM.find(s => s.level === level && s.loop === 1);
+  const L2 = EXAM.find(s => s.level === level && s.loop === 2) || L1;
+  if (infinite) return [buildProgram([L1]), buildProgram([L2])];
+  const list = [L1, L2];
+  if (level === 'dieo' && SONG.hasEnd) list.push(EXAM.find(s => s.level === 'end'));
+  const p = buildProgram(list);
+  return [p, p];
+}
 
 /* ---------- utils ---------- */
 const $ = id => document.getElementById(id);
@@ -342,10 +413,14 @@ function lowerBound(arr, t) { let lo = 0, hi = arr.length; while (lo < hi) { con
 /* ---------- settings ---------- */
 const ACCENTS = { red: '239 68 68', orange: '249 115 22', amber: '245 158 11', green: '34 197 94', cyan: '6 182 212', blue: '59 130 246', violet: '139 92 246', pink: '236 72 153' };
 const BGS = { black: '#000000', zinc: '#0e0e11', navy: '#070b16' };
-const DEFAULTS = { drum: 'male', mode: 'normal', view: 'default', metronome: true, accent: 'red', bg: 'black', keyL: 'KeyF', keyR: 'KeyJ' };
-const STORE_KEY = 'natab-songmai-v1';
+const DEFAULTS = { song: 'sadayong', drum: 'male', mode: 'normal', level: 'all', view: 'nomania', metronome: true, accent: 'red', bg: 'black', keyL: 'KeyF', keyR: 'KeyJ' };
+const STORE_KEY = 'natab-trainer-v1';
 let settings = { ...DEFAULTS };
 try { const s = JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); settings = { ...DEFAULTS, ...s }; } catch (e) {}
+if (!SONGS[settings.song]) settings.song = 'sadayong';
+if (settings.view === 'default') settings.view = 'mania';
+if (!['nomania', 'test', 'mania'].includes(settings.view)) settings.view = 'nomania';
+if (!['all', 'sam', 'song', 'dieo'].includes(settings.level)) settings.level = 'all';
 if (!ACCENTS[settings.accent]) settings.accent = 'red';
 if (!BGS[settings.bg]) settings.bg = 'black';
 function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(settings)); } catch (e) {} }
@@ -447,20 +522,44 @@ function segmented(el, key, options) {
     el.appendChild(b);
   });
 }
+function applySongUI() {
+  $('song-title').innerHTML = SONG.titleHTML;
+  $('notes-title').innerHTML = 'โน้ต' + SONG.titleHTML;
+  document.title = SONG.name + ' · ฝึกกลองแขก';
+}
+let levelSegFor = null;
+function buildLevelSeg() {
+  if (!SONG) return;
+  levelSegFor = settings.mode;
+  const inf = settings.mode === 'infinite';
+  const bars = lv => SHEET[lv].flat().length;
+  segmented($('seg-level'), 'level', [
+    { v: 'all', label: 'ทุกชั้น', sub: inf ? 'วนชุดสอบเต็ม' : 'ชุดสอบเต็ม' },
+    ...['sam', 'song', 'dieo'].map(lv => ({ v: lv, label: LEVEL_NAME[lv], sub: `${bars(lv)} ห้อง · ${inf ? 'วนไม่จำกัด' : '2 รอบ'}` }))
+  ]);
+  for (const b of $('seg-level').querySelectorAll('.seg-btn')) b.classList.toggle('active', b.dataset.v === settings.level);
+}
 function buildMenu() {
+  segmented($('seg-song'), 'song', SONG_ORDER.map(id => ({
+    v: id, label: SONGS[id].name,
+    sub: id === 'sadayong' ? 'ค่าเริ่มต้น · สามชั้น 16 / สองชั้น 8 / ชั้นเดียว 4 ห้อง' : 'เพลงเดิม · สามชั้น 8 / สองชั้น 4 / ชั้นเดียว 2 ห้อง'
+  })));
   segmented($('seg-drum'), 'drum', [
     { v: 'male', label: 'กลองตัวผู้', sub: 'ตี โจ๊ะ / ติง · Auto = ตัวเมีย' },
     { v: 'female', label: 'กลองตัวเมีย', sub: 'ตี จ๊ะ / ทั่ง · Auto = ตัวผู้' }
   ]);
   segmented($('seg-mode'), 'mode', [
-    { v: 'normal', label: 'ปกติ', sub: 'เล่นชุดสอบครบแล้วสรุปผล' },
+    { v: 'normal', label: 'ปกติ', sub: 'เล่นจบแล้วสรุปผล' },
     { v: 'infinite', label: 'Infinite', sub: '♥ 3 ดวง วนจนหัวใจหมด' }
   ]);
   segmented($('seg-view'), 'view', [
-    { v: 'default', label: 'Default', sub: 'เลน mania + เลน Auto' },
-    { v: 'nomania', label: 'No mania', sub: 'โน้ตของท่อนที่เล่น' },
+    { v: 'nomania', label: 'No mania', sub: 'ค่าเริ่มต้น · โน้ตของชั้นที่เล่น' },
     { v: 'test', label: 'Test', sub: 'เฉพาะ Accuracy' }
   ]);
+  segmented($('seg-view2'), 'view', [
+    { v: 'mania', label: 'Mania + เลน Auto', sub: 'โน้ตวงกลมตกลงมา · กลองอีกตัวเล่นเอง' }
+  ]);
+  buildLevelSeg();
   const swA = $('sw-accent'); swA.innerHTML = '';
   Object.entries(ACCENTS).forEach(([k, rgb]) => {
     const b = document.createElement('button'); b.className = 'swatch'; b.dataset.v = k; b.title = k;
@@ -485,7 +584,9 @@ function buildMenu() {
   $('notes-back').addEventListener('click', () => show('menu'));
 }
 function refreshMenu() {
-  for (const [id, key] of [['seg-drum', 'drum'], ['seg-mode', 'mode'], ['seg-view', 'view']])
+  if (!SONG || SONG.id !== settings.song) { loadSong(settings.song); applySongUI(); buildLevelSeg(); }
+  if (levelSegFor !== settings.mode) buildLevelSeg();
+  for (const [id, key] of [['seg-song', 'song'], ['seg-drum', 'drum'], ['seg-mode', 'mode'], ['seg-level', 'level'], ['seg-view', 'view'], ['seg-view2', 'view']])
     $(id).querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', b.dataset.v === settings[key]));
   $('sw-accent').querySelectorAll('.swatch').forEach(b => b.classList.toggle('active', b.dataset.v === settings.accent));
   $('sw-bg').querySelectorAll('.swatch').forEach(b => b.classList.toggle('active', b.dataset.v === settings.bg));
@@ -515,6 +616,13 @@ function barsHTML(bars) {
   let k = 0;
   return bars.map(bar => `<div class="bar">${[...bar].map(ch => sheetCellHTML(ch, snd[k++])).join('')}</div>`).join('');
 }
+/* แสดงหลายแถวตามบรรทัดในภาพ (จับคู่ จ ทั้งชั้นรวมกัน) */
+function rowsHTML(rows) {
+  const snd = resolveSounds(rows.flat().join('').split(''));
+  let k = 0;
+  return rows.map((bars, ri) => `<div class="flex flex-wrap gap-y-2 w-full">${bars.map(bar =>
+    `<div class="bar">${[...bar].map(ch => sheetCellHTML(ch, snd[k++])).join('')}</div>`).join('')}${ri === rows.length - 1 ? '<div class="self-center text-zinc-500 px-2 text-xl">//</div>' : ''}</div>`).join('');
+}
 function renderNotesView() {
   const kl = keyName(settings.keyL), kr = keyName(settings.keyR);
   $('legend').innerHTML = ['ting', 'joh', 'thang', 'jah'].map(k => {
@@ -527,17 +635,12 @@ function renderNotesView() {
   $('legend').querySelectorAll('[data-snd]').forEach(b => b.addEventListener('click', async () => {
     await initAudio(); await AC.resume(); playBuffer(b.dataset.snd, AC.currentTime);
   }));
-  const meta = {
-    sam: 'สามชั้น · 8 ห้อง',
-    song: 'สองชั้น · 4 ห้อง — (ต) : รอบแรกไม่มี ต นำหน้า, รอบที่สองตี ต',
-    dieo: 'ชั้นเดียว · 2 ห้อง — (ต) : ตี ต นำหน้าทั้ง 2 รอบ (ตามลำดับสอบ)'
-  };
   $('sheet').innerHTML = ['sam', 'song', 'dieo'].map(lv => `
     <div class="card">
-      <div class="flex items-baseline justify-between gap-3 flex-wrap mb-2"><div class="text-lg font-semibold">${LEVEL_NAME[lv]}</div><div class="text-xs text-zinc-400">${meta[lv]}</div></div>
-      <div class="flex flex-wrap gap-y-2">${barsHTML(SHEET[lv])}<div class="self-center text-zinc-500 px-2 text-xl">//</div></div>
+      <div class="flex items-baseline justify-between gap-3 flex-wrap mb-2"><div class="text-lg font-semibold">${LEVEL_NAME[lv]}</div><div class="text-xs text-zinc-400">${LEVEL_NAME[lv]} · ${SONG.meta[lv]}</div></div>
+      <div class="grid gap-3">${rowsHTML(SHEET[lv])}</div>
     </div>`).join('') +
-    `<p class="text-xs text-zinc-400"><span class="text-accent">สีหลัก</span> = กลองตัวผู้ · <span class="text-sky-200">สีฟ้า</span> = กลองตัวเมีย · <span class="text-red-400">(ต)</span> = ต ที่กำกับในภาพ</p>`;
+    `<p class="text-xs text-zinc-400"><span class="text-accent">สีหลัก</span> = กลองตัวผู้ · <span class="text-sky-200">สีฟ้า</span> = กลองตัวเมีย${SONG.hasOpt ? ' · <span class="text-red-400">(ต)</span> = ต ที่กำกับในภาพ' : ''} · จ เรียงเป็นคู่: ตัวแรก = โจ๊ะ, ตัวหลัง = จ๊ะ</p>`;
   $('exam-order').innerHTML = SECTIONS.map((sec, i) => {
     const label = sec.level === 'end' ? 'ปิดท้าย' : `${LEVEL_NAME[sec.level]} · รอบ ${sec.loop}`;
     const body = sec.level === 'end'
@@ -571,7 +674,7 @@ const playEl = $('play');
 
 function buildCycle(c) {
   const base = c * G.cycleSlots;
-  for (const s of TIMELINE) {
+  for (const s of G.prog(c).timeline) {
     if (!s.sound) continue;
     const info = SOUNDS[s.sound];
     G.notes.push({
@@ -591,10 +694,14 @@ async function startGame() {
   try { await initAudio(); await AC.resume(); } catch (e) { return; }
   if (G) cleanupGame();
   const infinite = settings.mode === 'infinite';
-  const cycleSlots = infinite ? Math.ceil(TIMELINE.length / 4) * 4 : TIMELINE.length; // Infinite: เติมช่วงเงียบให้ครบห้องก่อนวนใหม่
+  const [progA, progB] = makePrograms(settings.level, infinite);
+  const len = progA.timeline.length;
+  const cycleSlots = infinite ? Math.ceil(len / 4) * 4 : len; // Infinite: เติมช่วงเงียบให้ครบห้องก่อนวนใหม่
   G = {
-    infinite, view: settings.view, player: settings.drum, other: settings.drum === 'male' ? 'female' : 'male',
-    cycleSlots, cycleDur: cycleSlots * SLOT_SEC, contentEnd: TIMELINE.length * SLOT_SEC,
+    infinite, level: settings.level, single: settings.level !== 'all',
+    prog: c => (c <= 0 ? progA : progB), len,
+    view: settings.view, player: settings.drum, other: settings.drum === 'male' ? 'female' : 'male',
+    cycleSlots, cycleDur: cycleSlots * SLOT_SEC, contentEnd: len * SLOT_SEC,
     notes: [], cyclesBuilt: 0, state: 'running',
     t0: 0, cdStart: -COUNT_BEATS, nextTick: -COUNT_BEATS, nextSlot: 0, schedPtr: 0, missPtr: 0, nodes: new Set(),
     burst: { L: -1e9, R: -1e9 },
@@ -610,7 +717,7 @@ async function startGame() {
   $('pause-ov').classList.add('hide');
   $('result-ov').classList.add('hide');
   $('banner').classList.add('hide');
-  $('cv').classList.toggle('hide', G.view !== 'default');
+  $('cv').classList.toggle('hide', G.view !== 'mania');
   $('nomania').classList.toggle('hide', G.view !== 'nomania');
   $('testview').classList.toggle('hide', G.view !== 'test');
   document.querySelectorAll('.hs-score,.hs-combo').forEach(e => e.classList.toggle('hide', G.view === 'test'));
@@ -668,9 +775,9 @@ function scheduleAhead() {
   while (G.nextSlot * SLOT_SEC <= horizon) {
     const k = G.nextSlot, when = G.t0 + k * SLOT_SEC;
     G.nextSlot++;
-    if (!G.infinite && k >= TIMELINE.length) continue;
-    const idx = k % G.cycleSlots;
-    const isRest = idx >= TIMELINE.length || TIMELINE[idx].sym === '-';
+    if (!G.infinite && k >= G.len) continue;
+    const idx = k % G.cycleSlots, tl = G.prog(Math.floor(k / G.cycleSlots)).timeline;
+    const isRest = idx >= tl.length || tl[idx].sym === '-';
     if (isRest && settings.metronome && when >= now - 0.005) trackNode(makeClick(when, 'beat'), when, null);
   }
   ensureCycles(horizon + 2);
@@ -697,7 +804,7 @@ function tick() {
     const done = Math.floor((now + (G.cycleDur - G.contentEnd)) / G.cycleDur);
     if (done > G.loops) { G.loops = done; showBanner(`ครบ ${done} loop`, `เริ่มรอบที่ ${done + 1}`); }
   }
-  if (!G.infinite && now > G.lastNoteT + GOOD_WIN + 0.6) endGame('complete');
+  if (!G.infinite && now > G.lastNoteT + LATE_GOOD + 0.6) endGame('complete');
 }
 
 function sweepMisses(now) {
@@ -705,7 +812,7 @@ function sweepMisses(now) {
   while (G.missPtr < notes.length) {
     const n = notes[G.missPtr];
     if (!n.isPlayer || n.judged) { G.missPtr++; continue; }
-    if (now > n.t + GOOD_WIN) {
+    if (now > n.t + LATE_GOOD) {
       n.judged = true; n.result = 'miss'; G.missPtr++;
       registerMiss(null);
       if (G.state !== 'running') return;
@@ -728,7 +835,7 @@ function registerMiss(label) {
 }
 function judgeHit(n, diff) {
   const s = G.stats;
-  const kind = Math.abs(diff) <= PERFECT_WIN ? 'perfect' : 'good';
+  const kind = (diff < 0 ? -diff <= EARLY_PERFECT : diff <= LATE_PERFECT) ? 'perfect' : 'good';
   n.judged = true; n.result = kind;
   G.burst[n.side] = performance.now();
   s[kind]++; s.score += SCORE_PTS[kind]; s.combo++; if (s.combo > s.maxCombo) s.maxCombo = s.combo;
@@ -743,10 +850,11 @@ function onHit(side, perfMs) {
   let best = null, bestD = Infinity;
   for (let i = G.missPtr; i < G.notes.length; i++) {
     const n = G.notes[i];
-    if (n.t > ts + GOOD_WIN) break;
+    if (n.t > ts + EARLY_GOOD) break;
     if (!n.isPlayer || n.judged || n.side !== side) continue;
-    const d = Math.abs(n.t - ts);
-    if (d <= GOOD_WIN && d < bestD) { best = n; bestD = d; }
+    const diff = ts - n.t, d = Math.abs(diff);
+    const inWin = diff < 0 ? -diff <= EARLY_GOOD : diff <= LATE_GOOD;
+    if (inWin && d < bestD) { best = n; bestD = d; }
   }
   if (best) {
     trackNode(playBuffer(best.sound, AC.currentTime), AC.currentTime, null); // เลนผู้เล่น: มีเสียงเมื่อกดได้โน้ตเท่านั้น
@@ -872,27 +980,29 @@ function setupPads() {
 function setPadDown(side, on) { $('pad-' + side).classList.toggle('down', on); }
 
 function sectionAt(now) {
-  if (now < 0) return { idx: -1, sec: SECTIONS[0], cycle: 0 };
+  if (now < 0) { const p = G.prog(0); return { idx: -1, sec: p.sections[0], cycle: 0, prog: p }; }
   const slotG = Math.floor(now / SLOT_SEC + 1e-6);
-  if (!G.infinite && slotG >= TIMELINE.length) return { idx: TIMELINE.length, sec: SECTIONS[SECTIONS.length - 1], cycle: 0, pad: true };
+  if (!G.infinite && slotG >= G.len) { const p = G.prog(0); return { idx: G.len, sec: p.sections[p.sections.length - 1], cycle: 0, pad: true, prog: p }; }
   const cycle = Math.floor(slotG / G.cycleSlots);
   const idx = slotG - cycle * G.cycleSlots;
-  if (idx >= TIMELINE.length) return { idx, sec: SECTIONS[SECTIONS.length - 1], cycle, pad: true };
-  return { idx, sec: SECTIONS[TIMELINE[idx].sec], cycle, slot: TIMELINE[idx] };
+  const p = G.prog(cycle);
+  if (idx >= p.timeline.length) return { idx, sec: p.sections[p.sections.length - 1], cycle, pad: true, prog: p };
+  return { idx, sec: p.sections[p.timeline[idx].sec], cycle, slot: p.timeline[idx], prog: p };
 }
 function sectionLabel(info) {
-  if (info.idx < 0) return 'เตรียมพร้อม · ' + LEVEL_NAME[SECTIONS[0].level] + ' รอบ 1/2';
-  if (info.pad) return G.infinite ? 'ครบรอบ · กำลังเริ่มใหม่' : 'จบการสอบ';
+  const loopTxt = sec => (G.infinite && G.single) ? '' : ` · รอบ ${sec.loop}/2`;
+  if (info.idx < 0) return 'เตรียมพร้อม · ' + LEVEL_NAME[info.sec.level] + loopTxt(info.sec);
+  if (info.pad) return G.infinite ? 'ครบรอบ · กำลังเริ่มใหม่' : 'จบแล้ว';
   const sec = info.sec;
   if (sec.level === 'end') return 'ชั้นเดียว · กลับมาที่ (ต) แล้วจบ';
-  return `${LEVEL_NAME[sec.level]} · รอบ ${sec.loop}/2 · ห้อง ${info.slot.bar}/${sec.bars.length}`;
+  return `${LEVEL_NAME[sec.level]}${loopTxt(sec)} · ห้อง ${info.slot.bar}/${sec.bars.length}`;
 }
 
 function updateHud(now) {
   const s = G.stats;
   const info = sectionAt(now);
   setText($('hud-section'), (G.infinite ? `Loop ${G.loops + 1} · ` : '') + sectionLabel(info));
-  const prog = info.idx < 0 ? 0 : Math.min(1, (info.idx + 1) / TIMELINE.length);
+  const prog = info.idx < 0 ? 0 : Math.min(1, (info.idx + 1) / G.len);
   $('hud-progress').style.width = (prog * 100).toFixed(1) + '%';
   setText($('hud-score'), String(s.score));
   setText($('hud-acc'), accuracyOf(s).toFixed(2) + '%');
@@ -944,7 +1054,7 @@ function layout() {
   speed = (hitY - 10) / VISIBLE_SEC;
   LAY = { W, H, dpr, auto: { x: ax, w: aw }, player: { x: px, w: pw }, hitY, speed, rP, rA };
   const j = $('judge');
-  if (G && G.view === 'default') { j.style.left = (px + pw / 2) + 'px'; j.style.top = Math.max(60, hitY - rP - 60) + 'px'; }
+  if (G && G.view === 'mania') { j.style.left = (px + pw / 2) + 'px'; j.style.top = Math.max(60, hitY - rP - 60) + 'px'; }
   else { j.style.left = '50%'; j.style.top = G && G.view === 'test' ? '78%' : '86%'; }
 }
 window.addEventListener('resize', () => { if (screen === 'game' && G) { layout(); setupPads(); } });
@@ -1065,19 +1175,24 @@ function renderNoMania(now, info) {
   const key = info.cycle + ':' + level + ':' + loop;
   if (G.nm.key !== key) {
     G.nm.key = key; G.nm.cur = null; G.nm.next = null;
-    const sheet = SHEET[level];
+    const rows = SHEET[level];
     // เสียงของตำแหน่ง (ต) เปลี่ยนตามรอบ → ใช้ timeline ของรอบนี้จริง
-    const loopSec = SECTIONS.find(s => s.level === level && s.loop === loop);
+    const P = info.prog, TL = P.timeline, SC = P.sections;
+    const loopSec = SC.find(s => s.level === level && s.loop === loop);
+    const infSingle = G.infinite && G.single;
     let html = `<div class="text-center"><span class="nm-title">${LEVEL_NAME[level]}</span>
-      <span class="nm-dots"><i class="${loop === 1 ? 'on' : ''}"></i><i class="${loop === 2 ? 'on' : ''}"></i></span>
-      <div class="text-sm text-zinc-300 mt-2">รอบ ${loop}/2${G.infinite ? ` · Loop ${info.cycle + 1}` : ''}</div>
-      <div class="text-xs text-zinc-500 mt-1"><span class="text-accent">สีหลัก</span> = ${DRUM_NAME[G.player]} (คุณ) · <span style="color:#7cc4ff">สีฟ้า</span> = ${DRUM_NAME[G.other]} (Auto) · <span class="text-red-400">(ต)</span> = ตีเฉพาะบางรอบ</div></div>
+      ${infSingle ? '' : `<span class="nm-dots"><i class="${loop === 1 ? 'on' : ''}"></i><i class="${loop === 2 ? 'on' : ''}"></i></span>`}
+      <div class="text-sm text-zinc-300 mt-2">${SONG.name}${infSingle ? '' : ` · รอบ ${loop}/2`}${G.infinite ? ` · Loop ${info.cycle + 1}` : ''}</div>
+      <div class="text-xs text-zinc-500 mt-1"><span class="text-accent">สีหลัก</span> = ${DRUM_NAME[G.player]} (คุณ) · <span style="color:#7cc4ff">สีฟ้า</span> = ${DRUM_NAME[G.other]} (Auto)${SONG.hasOpt ? ' · <span class="text-red-400">(ต)</span> = ตีเฉพาะบางรอบ' : ''}</div></div>
       <div class="nm-sheet">`;
     let pos = 0;
-    sheet.forEach((bar, bi) => {
-      html += `<div class="nm-bar2${bi === 0 ? ' first' : ''}">`;
+    const bars = [];
+    rows.forEach((r, ri) => r.forEach((bar, bi) => bars.push({ bar, first: bi === 0, brk: ri > 0 && bi === 0 })));
+    bars.forEach(({ bar, first, brk }) => {
+      if (brk) html += '<div class="nm-break"></div>';
+      html += `<div class="nm-bar2${first ? ' first' : ''}">`;
       for (const ch of bar) {
-        const s = TIMELINE[loopSec.start + pos];
+        const s = TL[loopSec.start + pos];
         const snd = s.sound ? SOUNDS[s.sound] : null;
         const cls = !snd ? 'rest' : snd.drum === G.player ? 'mine' : 'other';
         let o = '';
@@ -1092,11 +1207,11 @@ function renderNoMania(now, info) {
     html += '<div class="nm-slash">//</div>';
     html += '</div>';
     // จบเพลง: ย้อนกลับมาตีที่ (ต) ต้นชั้นเดียว แล้วจบ (ไม่เพิ่มห้อง)
-    if (level === 'dieo') html += '<div id="nm-end" class="hide text-red-400 text-lg font-medium -mt-2">↺ กลับมาที่ (ต) แล้วจบ</div>';
+    if (level === 'dieo' && SONG.hasEnd) html += '<div id="nm-end" class="hide text-red-400 text-lg font-medium -mt-2">↺ กลับมาที่ (ต) แล้วจบ</div>';
     const km = DRUM_KEYS[G.player];
-    const nextSec = SECTIONS[(isEnd ? sec.idx : SECTIONS.findIndex(s => s.level === level && s.loop === loop)) + 1];
+    const nextSec = SC[(isEnd ? sec.idx : SC.findIndex(s => s.level === level && s.loop === loop)) + 1];
     html += `<div class="text-sm text-zinc-400 text-center">${keyName(settings.keyL)} = ${SOUNDS[km.L].name} · ${keyName(settings.keyR)} = ${SOUNDS[km.R].name}
-      <div class="text-xs text-zinc-500 mt-1">ถัดไป: ${nextSec ? (nextSec.level === 'end' ? 'กลับมาที่ (ต) แล้วจบ' : LEVEL_NAME[nextSec.level] + ' รอบ ' + nextSec.loop) : (G.infinite ? 'เริ่ม loop ใหม่' : 'จบการสอบ')}</div></div>`;
+      <div class="text-xs text-zinc-500 mt-1">ถัดไป: ${nextSec ? (nextSec.level === 'end' ? 'กลับมาที่ (ต) แล้วจบ' : LEVEL_NAME[nextSec.level] + ' รอบ ' + nextSec.loop) : (G.infinite ? 'เริ่ม loop ใหม่' : 'จบ')}</div></div>`;
     wrap.innerHTML = html;
     G.nm.cells = [...wrap.querySelectorAll('.nm-c')];
     G.nm.loopStart = loopSec.start;
@@ -1123,7 +1238,7 @@ function renderNoMania(now, info) {
     for (const el of G.nm.cells) {
       const p = +el.dataset.p;
       const isCur = cur === 'end' ? p === 0 : p === cur;
-      if (p === 0 && level === 'dieo') {
+      if (p === 0 && level === 'dieo' && SONG.hasEnd) {
         const lb = el.querySelector('.n');
         lb.textContent = (cur === 'end' || cur === 'done') ? 'ตี ต · จบ' : 'ตี ต';
         lb.style.color = (cur === 'end' || cur === 'done') ? '#f87171' : '';
@@ -1133,6 +1248,10 @@ function renderNoMania(now, info) {
       else if (cur === 'end') past = p !== 0;
       else if (typeof cur === 'number' && cur >= 0 && p !== 'end') past = p < cur;
       el.classList.toggle('cur', isCur);
+      if (isCur) { // เลื่อนให้เห็นตำแหน่งปัจจุบันเสมอ (จอเล็ก / สามชั้น 16 ห้อง)
+        const w = $('nomania'), wr = w.getBoundingClientRect(), r = el.getBoundingClientRect();
+        if (r.top < wr.top + 8 || r.bottom > wr.bottom - 8) w.scrollTop += (r.top + r.height / 2) - (wr.top + wr.height / 2);
+      }
       el.classList.toggle('past', past && !isCur);
       el.classList.toggle('next', p === next && !isCur);
     }
@@ -1163,7 +1282,7 @@ function frame() {
   if (!G || screen !== 'game') return;
   const now = G.state === 'running' ? heardNow() : G.state === 'paused' ? G.pauseSong : G.endSong;
   const info = updateHud(now);
-  if (G.view === 'default') drawMania(now);
+  if (G.view === 'mania') drawMania(now);
   else if (G.view === 'nomania') renderNoMania(now, info);
   else renderTest(now, info);
   updateCountdown(now);
@@ -1212,11 +1331,13 @@ $('btn-metro').addEventListener('click', () => { settings.metronome = !settings.
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && G.state === 'running') pauseGame(); });
 
 /* ---------- boot ---------- */
+loadSong(settings.song);
+applySongUI();
 applyTheme();
 buildMenu();
 refreshMenu();
 initAudio().catch(() => {});
-window.__natab = { TIMELINE, SECTIONS, get G() { return G; }, BUFFERS, ONSET, songTime: () => (G ? heardNow() : null) };
+window.__natab = { get TIMELINE() { return TIMELINE; }, get SECTIONS() { return SECTIONS; }, get SONG() { return SONG; }, get G() { return G; }, BUFFERS, ONSET, songTime: () => (G ? heardNow() : null) };
 })();
 </script>
 </body>
